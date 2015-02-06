@@ -11,9 +11,9 @@ logger = logging.getLogger('goblin')
 class Version(list):
 
     RELEASE=0
-    ALPHA=-1
-    TEST=-2
-    BETA=-3
+    TEST=-1
+    BETA=-2
+    ALPHA=-3
     DEV=-4
 
     _STAGES = (RELEASE, TEST, ALPHA, BETA, DEV)
