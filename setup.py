@@ -6,7 +6,7 @@ with open('README.rst') as f:
 
 setup(
     name='django-project-goblin',
-    version='1.0',
+    version='1.2',
     description='Manage list of projects',
     long_description=LONG_DESCRIPTION,
     author="Jordan Hewitt",
