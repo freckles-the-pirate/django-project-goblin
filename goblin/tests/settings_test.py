@@ -8,7 +8,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
-from goblin.settings import *
+#from goblin.settings import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os,sys
@@ -17,7 +17,7 @@ print("Insert %s"%BASE_DIR)
 sys.path.insert(0, BASE_DIR)
 
 # Import logging
-from goblin.tests.logger_setup import CONFIG as GOBLIN_LOG_CONFIG
+from goblin.logger_setup import CONFIG as GOBLIN_LOG_CONFIG
 
 LOGGING=GOBLIN_LOG_CONFIG
 

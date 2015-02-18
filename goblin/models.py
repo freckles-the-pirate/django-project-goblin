@@ -4,6 +4,8 @@ if __name__ == '__main__' and __package__ is None:
 
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext_lazy as _
 
 import re, math, logging
 logger = logging.getLogger('goblin')
@@ -32,6 +34,9 @@ class Version(list):
     def _lst_convert(self, ver):
         l1 = list(ver)
         l1.append(ver)
+        
+    def _are_eq(l1, l2):
+        return (l1 == l2) and self._are_eq(l1[1:], l2[1:])
 
     def __eq__(self, other):
         logger.debug("%s EQUALS %s"%(self, other))
@@ -102,9 +107,18 @@ class VersionField(models.Field):
 
 class Project(models.Model):
     name = models.CharField(max_length=400)
+    slug = models.SlugField(max_length=400,
+        help_text=_("Short name for the project"))
     description = models.TextField()
+    logo = models.ImageField()
     README = models.TextField(blank=True, null=True)
     homepage = models.URLField(blank=True, null=True)
+    
+    def get_absolute_url(self):
+        kwargs = {
+            'slug' : self.slug,
+        }
+        return reverse('goblin.views.show_project', kwargs=kwargs)
 
     class Meta:
         verbose_name="Project"
@@ -125,18 +139,20 @@ class NotLatestVersionException(ValidationError):
         self.expected = expected
 
     def __str__(self):
-        return "Expected a version higher than %s. Recieved %s"%(self.expected,
-                                                                 self.given)
+        return str("Expected a version higher than %s. "%self.expected +
+            "Recieved %s"%self.given)
 
     def __repr__(self):
-        return "Expected a version higher than %s. Recieved %s"%(self.expected,
-                                                                 self.given)
+        return str("Expected a version higher than %s. "%self.expected +
+            "Recieved %s"%self.given)
 
 class Release(models.Model):
     
     project = models.ForeignKey(Project)
     version = VersionField()
     download = models.URLField(blank=True, null=True)
+    release_logo = models.ImageField(blank=True, null=True,
+        help_text=_("Leaving blank will use the project's logo."))
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -156,6 +172,13 @@ class Release(models.Model):
             logger.debug("Latest version is %s."%latest)
             if latest and (self.version < latest):
                 raise NotLatestVersionException(self.version, latest)
+                
+    def get_absolute_url(self):
+        kwargs = {
+            'project_slug' : self.project.slug,
+            'version' : str(self.version),
+        }
+        return reverse('griffin.views.project_release', kwargs=kwargs)
 
     class Meta:
         verbose_name='Release'
