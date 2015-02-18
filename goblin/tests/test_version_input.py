@@ -19,7 +19,7 @@ class TestVersionInput(TestCase):
 
     def test_get_prep_value(self):
         v = Version(1, 3, 4, Version.ALPHA)
-        expected = '1.3.4.-1'
+        expected = '1.3.4.-3'
         self.assertEqual(self.field.get_prep_value(v), expected)
 
     def get_db_prep_value(self):

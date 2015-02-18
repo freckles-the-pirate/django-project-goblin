@@ -18,7 +18,8 @@ class Version(list):
     ALPHA=-3
     DEV=-4
 
-    _STAGES = (RELEASE, TEST, ALPHA, BETA, DEV)
+    _STAGES = (RELEASE, DEV, ALPHA, BETA, TEST)
+    _STAGES_STR = ('', '-dev', 'a', 'b', '-test')
 
     def __init__(self, *args):
         self.stage = Version.RELEASE
@@ -31,52 +32,46 @@ class Version(list):
                                  " int. Got %s instead."%type(args[i]))
         super(Version, self).__init__(args)
 
-    def _lst_convert(self, ver):
-        l1 = list(ver)
-        l1.append(ver)
-        
-    def _are_eq(l1, l2):
-        return (l1 == l2) and self._are_eq(l1[1:], l2[1:])
+    def _pad_either(self, other):
+        # First, add the stage
+        if len(self) < len(other):
+            self.extend([0]*(len(other)-len(self)))
+        elif len(self) > len(other):
+            other.extend([0]*(len(self)-len(other)))
+        return (self, other)
 
     def __eq__(self, other):
-        logger.debug("%s EQUALS %s"%(self, other))
-        eq = super(Version, self).__eq__(other) 
-        logger.debug("eq? %s, self(%s) == other(%s)?"%(eq, self.stage,
-                                                       other.stage))
-        return (eq and self.stage == other.stage)
+        (self, other) = self._pad_either(other)
+        return super(Version, self).__eq__(other) or (
+                super(Version, self).__eq__(other) and (self.stage ==
+                                                  other.stage))
 
-    def __gt__(self, other):
-        logger.debug("self(%s) GREATER THAN other(%s)"%(self, other))
-        gt = super(Version,self).__gt__(other)
-        eq = super(Version, self).__eq__(other)
-        c = other.stage > self.stage
-        logger.debug("gt? %s, eq? %s; other(%d)"%(gt, eq, other.stage) +
-                     " > self(%d) ? %s"%(self.stage, c))
-        return ((eq and c) or gt)
 
     def __lt__(self, other):
-        logger.debug("self(%s) LESS THAN other(%s)"%(self, other))
-        lt = super(Version,self).__lt__(other)
-        eq = super(Version, self).__eq__(other)
-        c = self.stage < other.stage
-        logger.debug("lt? %s, eq? %s; other(%d)"%(lt, eq, other.stage) +
-                     " < self(%d) ? %s"%(self.stage, c))
-        return ((eq and c) or lt)
+        (self, other) = self._pad_either(other)
+        return super(Version, self).__lt__(other) or (
+                super(Version, self).__eq__(other) and (self.stage < 
+                                                        other.stage))
+
+
+    def __gt__(self, other):
+        (self, other) = self._pad_either(other)
+        return super(Version, self).__gt__(other) or (
+                super(Version, self).__eq__(other) and (self.stage >
+                                                  other.stage))
+
+
+    def __unicode__(self):
+        s = '.'.join([str(i) for i in self])
+        if self.stage:
+            s += self._STAGES_STR[self.stage]
+        return s
 
     def __str__(self):
         return unicode(self)
 
-    def __unicode__(self):
-        s = '.'.join([str(i) for i in self])
-        if self.stage == Version.ALPHA:
-            s = s + 'a'
-        elif self.stage == Version.BETA:
-            s = s + 'b'
-        elif self.stage == Version.TEST:
-            s = s + '-test'
-        elif self.stage == Version.DEV:
-            s = s + '-dev'
-        return s
+    def __repr__(self):
+        return "<Version '%s'>"%unicode(self)
 
     @classmethod
     def from_str(Klass, string):

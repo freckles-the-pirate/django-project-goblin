@@ -31,7 +31,8 @@ class TestVersion(TestCase):
         self.assertTrue(Version(3, 4, 2) > Version(3, 2, 1))
         self.assertTrue(Version(10, 9) > Version(1, 3, 4, Version.ALPHA)),
         self.assertTrue(Version(1, 4) == Version(1, 4))
-        self.assertTrue(Version(4, 8, Version.BETA) >
-                         Version(4, 8, Version.ALPHA))
+        (vb, va) = (Version(4, 8, Version.BETA), Version(4, 8, Version.ALPHA))
+        logger.debug("beta: %s > alpha: %s ? %s"%(vb, va, (vb > va)))
+        self.assertGreater(vb, va)
         self.assertTrue(Version(4, 8, Version.DEV) <
                          Version(4, 8, Version.ALPHA))
