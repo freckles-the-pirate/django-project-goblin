@@ -10,6 +10,8 @@ from django.utils.translation import ugettext_lazy as _
 import re, math, logging
 logger = logging.getLogger('goblin')
 
+VERSION_REGEXP=r'\d(\.\d+)+(a|b|(\-(dev|test)))?'
+
 class Version(list):
 
     RELEASE=0
@@ -75,6 +77,8 @@ class Version(list):
 
     @classmethod
     def from_str(Klass, string):
+        if not re.match(VERSION_REGEXP, string):
+            raise ValueError("'%s' is not the correct version format"%string)
         return Klass(*[int(i) for i in string.split('.')])
 
     def to_db(self):
@@ -86,7 +90,7 @@ class VersionField(models.Field):
         super(VersionField, self).__init__(*args, **kwargs)
 
     def db_type(self, connection):
-        return 'char(500)'
+        return 'varchar(500)'
 
     def to_python(self, value):
         if isinstance(value, Version):
@@ -105,15 +109,16 @@ class Project(models.Model):
     slug = models.SlugField(max_length=400,
         help_text=_("Short name for the project"))
     description = models.TextField()
-    logo = models.ImageField()
-    README = models.TextField(blank=True, null=True)
+    logo = models.ImageField(blank=True, null=True)
+    README = models.TextField(blank=True, null=True,
+                 help_text=_("reStructuedText supported"))
     homepage = models.URLField(blank=True, null=True)
     
     def get_absolute_url(self):
         kwargs = {
-            'slug' : self.slug,
+            'project_slug' : self.slug,
         }
-        return reverse('goblin.views.show_project', kwargs=kwargs)
+        return reverse('show_project', kwargs=kwargs)
 
     class Meta:
         verbose_name="Project"
@@ -173,7 +178,7 @@ class Release(models.Model):
             'project_slug' : self.project.slug,
             'version' : str(self.version),
         }
-        return reverse('griffin.views.project_release', kwargs=kwargs)
+        return reverse('show_project_release', kwargs=kwargs)
 
     class Meta:
         verbose_name='Release'

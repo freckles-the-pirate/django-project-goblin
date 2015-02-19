@@ -6,16 +6,16 @@ from goblin.models import *
 # Create your views here.
 
 def list_projects(request):
-    template = '%s/project_list.html'%settings.GOBLIN_TEMPLATE_DIR
+    template = '%s/project_list.html'%GOBLIN_TEMPLATE_DIR
     return render(request, template)
 
 def show_project(request, project_slug):
-    template = '%s/project.html'%settings.GOBLIN_TEMPLATE_DIR
     p = Project.objects.get(slug=project_slug)
     context = {
         'project' : p,
     }
-    return render(request, context, template)
+    template = '%s/project.html'%GOBLIN_TEMPLATE_DIR
+    return render(request, template, context)
 
 def project_release(request, project_slug, version):
     p = Project.objects.get(slug=project_slug)
@@ -26,5 +26,5 @@ def project_release(request, project_slug, version):
         #'version' : v,
         'release' : release,
     }
-    template = '%s/release.html'%settings.GOBLIN_TEMPLATE_DIR
-    return render(request, context, template)
+    template = '%s/release.html'%GOBLIN_TEMPLATE_DIR
+    return render(request, template, context)
