@@ -6,11 +6,12 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.utils.safestring import mark_safe
 
 import re, math, logging
 logger = logging.getLogger('goblin')
 
-VERSION_REGEXP=r'\d(\.\d+)+(a|b|(\-(dev|test)))?'
+VERSION_REGEXP='\d(\.\d+)+(a|b|(\-(dev|test)))?'
 
 class Version(list):
 
@@ -77,7 +78,7 @@ class Version(list):
 
     @classmethod
     def from_str(Klass, string):
-        if not re.match(VERSION_REGEXP, string):
+        if not re.match(r'%s'%VERSION_REGEXP, string):
             raise ValueError("'%s' is not the correct version format"%string)
         return Klass(*[int(i) for i in string.split('.')])
 
@@ -113,12 +114,22 @@ class Project(models.Model):
     README = models.TextField(blank=True, null=True,
                  help_text=_("reStructuedText supported"))
     homepage = models.URLField(blank=True, null=True)
+
+    def __unicode__(self):
+        releases = self.release_set.all()
+        if len(releases) > 0:
+            return "%s (%d releases)"%(self.name, len(releases))
+        return "%s"%self.name
+
+    def __str__(self):
+        return unicode(self)
     
     def get_absolute_url(self):
         kwargs = {
             'project_slug' : self.slug,
         }
-        return reverse('show_project', kwargs=kwargs)
+        return reverse('goblin.views.show_project', kwargs=kwargs,
+            current_app='goblin')
 
     class Meta:
         verbose_name="Project"
@@ -150,9 +161,18 @@ class Release(models.Model):
     
     project = models.ForeignKey(Project)
     version = VersionField()
+    brief = models.TextField(help_text=_(mark_safe(
+        "What features are part of this release? Note that changes can be" +
+        " added with the <b>Changes</b> field.")))
     download = models.URLField(blank=True, null=True)
     release_logo = models.ImageField(blank=True, null=True,
         help_text=_("Leaving blank will use the project's logo."))
+
+    release_date = models.DateField(auto_now=True,
+       help_text=_("When was this version released?"))
+
+    def __unicode__(self):
+        return "%s %s"%(self.project, self.version)
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -178,7 +198,8 @@ class Release(models.Model):
             'project_slug' : self.project.slug,
             'version' : str(self.version),
         }
-        return reverse('show_project_release', kwargs=kwargs)
+        return reverse(goblin.views.project_release, kwargs=kwargs,
+            current_app='goblin')
 
     class Meta:
         verbose_name='Release'

@@ -7,7 +7,10 @@ from goblin.models import *
 
 def list_projects(request):
     template = '%s/project_list.html'%GOBLIN_TEMPLATE_DIR
-    return render(request, template)
+    context = {
+        'project' : Project.objects.all(),
+    }
+    return render(request, template, context)
 
 def show_project(request, project_slug):
     p = Project.objects.get(slug=project_slug)
