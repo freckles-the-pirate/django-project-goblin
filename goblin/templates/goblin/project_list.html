@@ -1,0 +1,10 @@
+{% extends "skeleton.html" %}
+{% block content %}
+    <h1>Projects</h1>
+    {% for project in project %}
+        <h3>{{ project.title }}</h3>
+        <p class="project-description">{{ project.description }}</p>
+    {% empty %}
+        <p>No projects yet!</p>
+    {% endfor %}
+{% endblock %}
