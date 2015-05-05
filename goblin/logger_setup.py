@@ -21,7 +21,7 @@ class ColorHandler(ColorizingStreamHandler):
             logging.CRITICAL: ('red', 'white', True),
         }
 
-CONFIG = {
+LOGGING = {
     'version':1,
     'disable_existing_loggers': False,
     'handlers':{
@@ -50,6 +50,6 @@ CONFIG = {
     },
 }
 
-logging.config.dictConfig(CONFIG)
+logging.config.dictConfig(LOGGING)
 logger = logging.getLogger('goblin')
 logger.debug("Logger is set up!")

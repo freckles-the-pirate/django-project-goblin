@@ -12,6 +12,19 @@ import re, math, logging
 logger = logging.getLogger('goblin')
 
 VERSION_REGEXP='\d(\.\d+)+(a|b|(\-(dev|test)))?'
+    
+class PublishStatus(models.Model):
+    status = models.CharField(max_length=100)
+    meaning = models.TextField(blank=True, null=True)
+    
+    def __unicode__(self):
+        return '%s'%self.status
+    
+class Publishable(models.Model):
+    status = models.ForeignKey(PublishStatus)
+    
+    class Meta:
+        abstract=True
 
 class Version(list):
 
@@ -103,9 +116,32 @@ class VersionField(models.Field):
         return None
 
     def get_prep_value(self, value):
+        if not value:
+            return "NULL"
         return value.to_db()
+    
+class ProjectManager(models.Manager):
+    
+    def with_statuses(self, statuses):
+        from django.db import connection
+        cursor = connection.cursor()
+        query="""SELECT id
+            from goblin_project
+            WHERE status_id IN (
+                SELECT id
+                FROM goblin_publishstatus
+                WHERE UPPER(status)
+                IN (%s)
+            )"""%(','.join(["'%s'"%s.upper() for s in statuses]))
+        logger.debug("Executing %s"%query)
+        cursor.execute(query)
+        projects = []
+        for row in cursor.fetchall():
+            project = Project.objects.get(pk=row[0])
+            projects.append(project)
+        return projects
 
-class Project(models.Model):
+class Project(Publishable):
     name = models.CharField(max_length=400)
     slug = models.SlugField(max_length=400,
         help_text=_("Short name for the project"))
@@ -114,6 +150,8 @@ class Project(models.Model):
     README = models.TextField(blank=True, null=True,
                  help_text=_("reStructuedText supported"))
     homepage = models.URLField(blank=True, null=True)
+    
+    objects = ProjectManager()
 
     def __unicode__(self):
         releases = self.release_set.all()
@@ -134,6 +172,14 @@ class Project(models.Model):
     class Meta:
         verbose_name="Project"
         verbose_name_plural="Projects"
+    
+class ProjectLink(models.Model):
+    type = models.CharField(max_length=100)
+    url = models.URLField()
+    project = models.ForeignKey('Project', related_name='project_links',
+                                blank=True, null=True)
+    release = models.ForeignKey('Release', related_name='project_links',
+                                blank=True, null=True)
 
 class NotLatestVersionException(ValidationError):
 
@@ -157,7 +203,7 @@ class NotLatestVersionException(ValidationError):
         return str("Expected a version higher than %s. "%self.expected +
             "Recieved %s"%self.given)
 
-class Release(models.Model):
+class Release(Publishable):
     
     project = models.ForeignKey(Project)
     version = VersionField()
@@ -205,7 +251,7 @@ class Release(models.Model):
         verbose_name='Release'
         verbose_name_plural='Releases'
 
-class Change(models.Model):
+class Change(Publishable):
     ACTIONS = (
         ('+', "Add"),
         ('-', "Remove"),

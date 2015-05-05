@@ -8,7 +8,7 @@ from goblin.models import *
 def list_projects(request):
     template = '%s/project_list.html'%GOBLIN_TEMPLATE_DIR
     context = {
-        'project' : Project.objects.all(),
+        'projects' : Project.objects.with_statuses(['public']),
     }
     return render(request, template, context)
 
