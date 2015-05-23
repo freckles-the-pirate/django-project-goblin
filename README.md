@@ -37,6 +37,17 @@ attributes for a software project are (self-explainator):
 -   description
 -   README (a longer description)
 -   homepage (URL link to a project).
+-   Status
+
+### Project Status
+
+Adds a little control over how you were involved in the project. Solely
+used for controlling what's shown and what isn't shown.
+
+For example, I may add a status called "contribution," to show that I
+was a contributor to the project. Then in my views to list all my
+contributions I can just filter by
+`project.status.status == 'contribtuion'`.
 
 ### Release
 
@@ -111,3 +122,4 @@ This is thrown when a release is being added to a project and the
 release's version is not greater than the last added version. For
 example, if a project's latest version is 1.0 and you're trying to add a
 version 0.8, the exception will be thrown.
+

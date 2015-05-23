@@ -27,7 +27,7 @@ LOGGING = {
     'handlers':{
         'console': {
             '()':ColorHandler,
-            'info':'white',
+            #'info':'white',
             'level': 'DEBUG',
             'formatter': 'detailed',
             'stream': 'ext://sys.stdout',
