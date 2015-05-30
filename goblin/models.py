@@ -42,13 +42,16 @@ class Version(list):
         if args[-1] in Version._STAGES:
             self.stage = args[-1]
             args = args[:-1] # simulating pop()
-        for i in range(0, len(args)):
-            if not isinstance(args[i], int):
-                raise ValueError("Expected type of element %d to be"%i +
+            for i in range(0, len(args)):
+                if not isinstance(args[i], int):
+                    raise ValueError("Expected type of element %d to be"%i +
                                  " int. Got %s instead."%type(args[i]))
         super(Version, self).__init__(args)
 
     def _pad_either(self, other):
+        print("Self; %s, Other: %s"%(self, other))
+        if other == None or (len(other) == 0):
+            return []
         # First, add the stage
         if len(self) < len(other):
             self.extend([0]*(len(other)-len(self)))
@@ -57,6 +60,8 @@ class Version(list):
         return (self, other)
 
     def __eq__(self, other):
+        if other == None or (len(other) == 0):
+            return False
         (self, other) = self._pad_either(other)
         return super(Version, self).__eq__(other) or (
                 super(Version, self).__eq__(other) and (self.stage ==
@@ -64,6 +69,8 @@ class Version(list):
 
 
     def __lt__(self, other):
+        if other == None or (len(other) == 0):
+            return False
         (self, other) = self._pad_either(other)
         return super(Version, self).__lt__(other) or (
                 super(Version, self).__eq__(other) and (self.stage < 
@@ -71,6 +78,8 @@ class Version(list):
 
 
     def __gt__(self, other):
+        if other == None:
+            return False
         (self, other) = self._pad_either(other)
         return super(Version, self).__gt__(other) or (
                 super(Version, self).__eq__(other) and (self.stage >
@@ -154,7 +163,7 @@ class Project(Publishable):
     objects = ProjectManager()
 
     def __unicode__(self):
-        releases = self.release_set.all()
+        releases = Release.objects.filter(project=self)
         if len(releases) > 0:
             return "%s (%d releases)"%(self.name, len(releases))
         return "%s"%self.name
@@ -176,10 +185,13 @@ class Project(Publishable):
 class ProjectLink(models.Model):
     type = models.CharField(max_length=100)
     url = models.URLField()
-    project = models.ForeignKey('Project', related_name='project_links',
+    project = models.ForeignKey('Project', related_name='+',
                                 blank=True, null=True)
-    release = models.ForeignKey('Release', related_name='project_links',
+    release = models.ForeignKey('Release', related_name='+',
                                 blank=True, null=True)
+    
+    def __unicode__(self):
+        return "%s - %s"%(self.project, self.url)
 
 class NotLatestVersionException(ValidationError):
 
@@ -205,7 +217,7 @@ class NotLatestVersionException(ValidationError):
 
 class Release(Publishable):
     
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, related_name='+')
     version = VersionField()
     brief = models.TextField(help_text=_(mark_safe(
         "What features are part of this release? Note that changes can be" +
@@ -227,9 +239,10 @@ class Release(Publishable):
     def clean(self):
         logger.debug("Cleaning a release.")
         latest = None
+        releases = Release.objects.filter(project=self.project)
         if self.project:
             logger.debug("Finding latest version...")
-            for r in self.project.release_set.all():
+            for r in releases:
                 """ NOTE that r.version is not a VersionField as expected.
                 This is due to the Python error
                 https://code.djangoproject.com/ticket/14518
@@ -258,7 +271,7 @@ class Change(Publishable):
         ('*', "Fix"),
         ('>', "Other"),
     )
-    release = models.ForeignKey(Release)
+    release = models.ForeignKey(Release, related_name='+')
     action = models.CharField(choices=ACTIONS, max_length=3)
     what = models.TextField()
 
