@@ -1,4 +1,5 @@
 *.pyc
 *.egg-info
+*.kdev4
 dist
 MANIFEST
