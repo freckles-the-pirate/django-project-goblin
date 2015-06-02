@@ -185,10 +185,8 @@ class Project(Publishable):
 class ProjectLink(models.Model):
     type = models.CharField(max_length=100)
     url = models.URLField()
-    project = models.ForeignKey('Project', related_name='+',
-                                blank=True, null=True)
-    release = models.ForeignKey('Release', related_name='+',
-                                blank=True, null=True)
+    project = models.ForeignKey('Project', blank=True, null=True)
+    release = models.ForeignKey('Release', blank=True, null=True)
     
     def __unicode__(self):
         return "%s - %s"%(self.project, self.url)
@@ -217,7 +215,7 @@ class NotLatestVersionException(ValidationError):
 
 class Release(Publishable):
     
-    project = models.ForeignKey(Project, related_name='+')
+    project = models.ForeignKey(Project)
     version = VersionField()
     brief = models.TextField(help_text=_(mark_safe(
         "What features are part of this release? Note that changes can be" +
