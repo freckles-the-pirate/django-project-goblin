@@ -204,6 +204,7 @@ class NotLatestVersionException(ValidationError):
         """
         self.given = given
         self.expected = expected
+        self.error_list = []
 
     def __str__(self):
         return str("Expected a version higher than %s. "%self.expected +
