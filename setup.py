@@ -6,7 +6,7 @@ with open('README.rst') as f:
 
 setup(
     name='django-project-goblin',
-    version='1.3',
+    version='1.4',
     description='Manage list of projects',
     long_description=LONG_DESCRIPTION,
     author="Jordan Hewitt",
@@ -24,7 +24,11 @@ setup(
     ],
 
     keywords = 'project software version development management django',
-    url='https://gitorious.org/django-project-goblin',
+    url='https://github.com/freckles-the-pirate/django-project-goblin',
 
-    packages=['goblin',],
+    packages=['goblin',
+              'goblin.templates',
+              'goblin.tests',
+              'goblin.urls',
+              ],
 )
